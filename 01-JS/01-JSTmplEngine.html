@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>只有20行的JS模板引擎</title>
+</head>
+
+<body>
+  <script>
+    var TemplateEngine = function (tpl, data) {
+      // magic here ...
+    }
+    var template = '<p>Hello, my name is <%name%>. I\'m <%age%> years old.</p>';
+    console.log(TemplateEngine(template, {
+      name: "Krasimir",
+      age: 29
+    }));
+  </script>
+</body>
+
+</html>
