@@ -38,12 +38,13 @@
       // 指定this为data,相较于call,apply后边的参数是数组姿势传入的！而call则是一个个传入
       return new Function(code.replace(/[\r\t\n]/g, '')).apply(data);
     }
-    var template = '<p>Hello, my name is <%this.name%>. I\' m <%this.profile.age%> years old.</p>';
+    var template =
+      'My skills:' +
+      '<%for(var index in this.skills) {%>' +
+      '<a href="#"><%this.skills[index]%></a>' +
+      '<%}%>';
     console.log(TemplateEngine(template, {
-      name: "Krasimir Tsonev",
-      profile: {
-        age: 29
-      }
+        skills: ["js", "html", "css"]
     }));
   </script>
 </body>
