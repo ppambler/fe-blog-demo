@@ -28,7 +28,15 @@
       add(tpl.substr(cursor, tpl.length - cursor));
       code += 'return r.join("");'; // <-- return the result
       console.log(code);
-      return tpl;
+      //我们搞出来的拼接而成的函数
+      console.log(new Function(code.replace(/([\t\v\n\r\f])/g, '')))
+      //看看eval行不：不行呀，遇到return这个关键字直接就语法错误了，说是 Illegal return statement，即非法的return语句
+      // console.log(eval(code.replace(/([\t\v\n\r\f])/g, '')))
+      //注意千万不要把空格也给替换了，因为我们有个var r=[]哈！不然就成了varr=[]了
+      //感觉用正则做的模板引擎真得得很细心才行，不然很容易就出错了！
+      console.log(new Function(code.replace(/([\t\v\n\r\f])/g, '')).apply(data))
+      // 指定this为data,相较于call,apply后边的参数是数组姿势传入的！而call则是一个个传入
+      return new Function(code.replace(/[\r\t\n]/g, '')).apply(data);
     }
     var template = '<p>Hello, my name is <%this.name%>. I\' m <%this.profile.age%> years old.</p>';
     console.log(TemplateEngine(template, {
