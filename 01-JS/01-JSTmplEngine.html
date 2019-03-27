@@ -9,45 +9,55 @@
 </head>
 
 <body>
-  <div id="result"> </div>
+  <div>字符串模板里边没有this的结果：</div>
+  <div id="result"></div>
+  <hr>
+  <hr>
+  <div>有this的结果：</div>
+  <div id="xxx"></div>
   <script>
-    var TemplateEngine = function (tpl, data) {
+    var TemplateEngine = function (html, options) {
       var re = /<%([^%>]+)?%>/g,
         // 子串是以这些有if、for等之类开头的，就不要搞push了
-        reExp = /(^( )?(if|for|else|switch|case|break|{|}))(.*)?/g,
-        code = 'var r=[];\n',
+        reExp = /(^( )?(var|if|for|else|switch|case|break|{|}|;))(.*)?/g,
+        code = 'with(obj) {var r=[];\n',
         cursor = 0,
+        result,
         match;
       var add = function (line, js) {
         // 这种简写姿势很巧妙
-        js ? code += line.match(reExp) ? `${line}\n` : `r.push(${line});\n` :
-          code += `r.push("${line.replace(/"/g, '\\"')}");\n`;
+        js ? (code += line.match(reExp) ? `${line}\n` : `r.push(${line});\n`) :
+          (code += line != '' ? `r.push("${line.replace(/"/g, '\\"')}");\n` : '');
+        return add;
       }
-      while (match = re.exec(tpl)) {
-        add(tpl.slice(cursor, match.index));
-        add(match[1], true); //告知这里边的子串是原生JS
+      while (match = re.exec(html)) {
+        //搞了一个链式操作
+        add(html.slice(cursor, match.index))(match[1], true);
         cursor = match.index + match[0].length;
       }
-      add(tpl.substr(cursor, tpl.length - cursor));
-      code += 'return r.join("");'; // <-- return the result
-      console.log(code);
-      //我们搞出来的拼接而成的函数
-      console.log(new Function(code.replace(/([\t\v\n\r\f])/g, '')))
-      //看看eval行不：不行呀，遇到return这个关键字直接就语法错误了，说是 Illegal return statement，即非法的return语句
-      // console.log(eval(code.replace(/([\t\v\n\r\f])/g, '')))
-      //注意千万不要把空格也给替换了，因为我们有个var r=[]哈！不然就成了varr=[]了
-      //感觉用正则做的模板引擎真得得很细心才行，不然很容易就出错了！
-      console.log(new Function(code.replace(/([\t\v\n\r\f])/g, '')).apply(data))
-      // 指定this为data,相较于call,apply后边的参数是数组姿势传入的！而call则是一个个传入
-      return new Function(code.replace(/[\r\t\n]/g, '')).apply(data);
+      add(html.substr(cursor, html.length - cursor));
+      code = (code + 'return r.join(""); }').replace(/[\r\t\n]/g, ' ');
+      //使用try……catch保证了模板字符串里边的占位符里边的代码如果出错了，就会报错出来，而且这也不会影响其它模板字符串的渲染
+      //如下边的测试用例template有问题的话，比如for写成了fr,那么tmpl的渲染是不会有问题的
+      //只是这错误信息比较难找，比较万一这个模板字符串很长怎么办呢？当然你可以把报错信息赋值一遍，
+      // 然后扔到控制台去运行一下，让Chrome浏览器帮我们检查错误，而不是我们肉眼观测
+      try {
+        //形参是obj,与我们开头对code变量初始化值 with(obj)一致！obj的实参是用户所传的数据参数
+        //为了兼容以前那种在字符串模板添加this的那种姿势，我们指定了一个this值
+        result = new Function('obj', code).apply(options, [options]);
+      } catch (err) {
+        console.error("'" + err.message + "'", " in \n\nCode:\n", code, "\n");
+      }
+      return result;
     }
     //数据一套正则，有复杂的语句的又一套正则，前者需要push到数组里边，而后者则不需要
     //这种姿势写的模板字符串，会显得有很多空格哈！
+    //使用了with，让我们去掉了字符串模板去掉了this!这样代码看起来更直观！
     var template = `
       My skills:
-      <%if(this.showSkills) {%>
-      <%for(var index in this.skills) {%>
-        <a href="#"><%this.skills[index]%></a>
+      <%if(showSkills) {%>
+      <%for(var index in skills) {%>
+        <a href="#"><%skills[index]%></a>
       <%}%>
       <%} else {%>
         <p>none</p>
@@ -57,11 +67,35 @@
         skills: ["js", "html", "css"],
         showSkills: true
     }));
+    //字符串模板里边有this：
+    //我开始明白vuejs里边的列表渲染为啥把v-for指令扔到li元素身上了！
+    var tmpl = `
+    My fruit:
+    <%if(this.showFruit) {%>
+    <ul>
+    <%for(var index in this.fruit) {%>
+      <li><%this.fruit[index]%></li>
+    <%}%>
+    </ul>
+    <%} 
+      else {%>
+    <p>none</p>
+    <%}%>  
+    `;
+    console.log(TemplateEngine(tmpl, {
+      fruit: ["橙子", "苹果", "香蕉"],
+      showFruit: true
+    }));
     //怎么用？你需要定义好自己的模板（把模板里边有占位符包裹的代码看作是真正的JavaScript代码），然后填充好你想要的数据即可
     var result = document.getElementById('result')
     result.innerHTML = TemplateEngine(template, {
       skills: ["js", "html", "css"],
       showSkills: true
+    })
+    var xxx = document.getElementById('xxx')
+    xxx.innerHTML = TemplateEngine(tmpl, {
+      fruit: ["橙子", "苹果", "香蕉"],
+      showFruit: true
     })
   </script>
 </body>
