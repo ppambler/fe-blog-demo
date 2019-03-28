@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>遍历DOM节点，获取动态块</title>
+</head>
+
+<body>
+  <div id="app">
+    我叫{{name}}，今年 <span>{{age}} <span>你好呀！</span> </span> 周岁！
+    <p>我的爱好：</p>
+    <ul>
+      <li>{{hobby.play}}</li>
+    </ul>
+  </div>
+  <script>
+    const app = document.getElementById('app')
+    let data = {
+      age: 22,
+      name: 'frank',
+      hobby: {
+        play: '打篮球'
+      }
+    }
+
+    function traverse(node) {
+      console.log(node.childNodes)
+      if (node.nodeType == 1 && node.childNodes.length != 0) {
+        node.childNodes.forEach(childNode => {
+          traverse(childNode)
+          console.log(childNode.nodeValue)
+        })
+      } else if (node.nodeType == 3) {
+        console.log(node)
+        renderText(node)
+      }
+    }
+
+    function renderText(node) {
+      const reg = /{{(.+?)}}/g
+      let match
+      while (match = reg.exec(node.nodeValue)) {
+        console.log(match)
+        let raw = match[0]
+        let key = match[1].trim()
+        node.nodeValue = node.nodeValue.replace(raw, data[key])
+      }
+    }
+
+    function renderText(node, data) {
+      let reg = /{{(.+?)}}/g,
+        code = 'with(obj) {var r=[];\n',
+        cursor = 0,
+        match;
+      let add = function (line, js) {
+        js ? code += `r.push(${line});\n` :
+          code += `r.push("${line.replace(/"/g, '\\"')}");\n`
+      }
+      while (match = reg.exec(node.nodeValue)) {
+        add(node.nodeValue.slice(cursor, match.index));
+        add(match[1], true);
+        cursor = match.index + match[0].length;
+      }
+      add(node.nodeValue.substr(cursor, node.nodeValue.length - cursor));
+      code += 'return r.join("");}';
+      console.log(code)
+      node.nodeValue = Function('obj', code).apply(data, [data]);
+      return undefined
+    }
+    traverse(app)
+  </script>
+</body>
+
+</html>
