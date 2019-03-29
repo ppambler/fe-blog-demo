@@ -10,7 +10,7 @@
 
 <body>
   <div id="app">
-    我叫{{name}}，今年 <span>{{age}} <span>你好呀！</span> </span> 周岁！
+    我叫{{name}}，今年 <span>{{age}} 周岁！<span>你好呀！</span> </span>
     <p>我的爱好：</p>
     <ul>
       <li>{{hobby.play}}</li>
@@ -90,6 +90,39 @@
       }
       node.innerHTML = _strNode
     }
+
+    function observe(xxx) {
+      if (!xxx || typeof xxx !== 'object') return
+      for (var key in xxx) {
+        let val = xxx[key]
+        Object.defineProperty(xxx, key, {
+          enumerable: true,
+          configurable: true,
+          get: function () {
+            console.log(`get ${val}`)
+            return val
+          },
+          set: function (newVal) {
+            console.log(`changes happen: ${val} => ${newVal}`)
+            let oldVal = val
+            val = newVal
+            console.log(1)
+            dataChange(oldVal, newVal)
+          }
+        })
+        if (typeof val === 'object') {
+          observe(val)
+        }
+      }
+    }
+
+    function dataChange(preValue, newVal) {
+      let domStr = app.innerHTML
+      domStr = domStr.replace(preValue, newVal)
+      app.innerHTML = domStr
+    }
+
+    observe(data)
     traverse(app);
     renderText(app, data)
   </script>
