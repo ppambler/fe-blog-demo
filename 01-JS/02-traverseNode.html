@@ -14,6 +14,7 @@
     <p>我的爱好：</p>
     <ul>
       <li>{{hobby.play}}</li>
+      <li>{{hobby.eat}}</li>
     </ul>
   </div>
   <script>
@@ -22,55 +23,75 @@
       age: 22,
       name: 'frank',
       hobby: {
-        play: '打篮球'
+        play: '打篮球',
+        eat: '吃面条',
+      },
+      block: {
+        xxx: 'xx'
+      },
+      result: {
+        zzz: 'xx'
       }
     }
+    //注意：可以利用开发者工具(inspect这个app元素，切换到Elements面板中的Properties即可)查看这个app dom元素，有哪些API，然后跟据这些API做你想要做的事！
+    //我想要的结果：把app里边的动态块替换成我们data里边相应的数据
+    // 思路：
+    // 1. 遍历app这个dom元素，拿到其里边所有文本节点字符串
+    // 2. 把文本节点里边存在的动态块给替换后，然后重新渲染一遍
+    //写着写着，决定换个思路，如把app这个dom元素里边所有的动态块给提取出来！
+    let reg = /{{(.+?)}}/g
+    let _block = []
 
+    // 我觉得似乎无须遍历dom节点，我们直接使用它的innerText方法，直接拿到所有的文本节点不就好吗？
     function traverse(node) {
-      console.log(node.childNodes)
       if (node.nodeType == 1 && node.childNodes.length != 0) {
         node.childNodes.forEach(childNode => {
           traverse(childNode)
-          console.log(childNode.nodeValue)
+          // console.log(childNode.nodeValue)
         })
       } else if (node.nodeType == 3) {
-        console.log(node)
-        renderText(node)
+        // console.log(node)
+        let trimStr = node.nodeValue.trim()
+        let match
+        console.log(trimStr)
+        // 这里用reg.test(reg),{{age}}居然没有匹配到！有毒！
+        if (match = trimStr.match(reg)) {
+          _block.push(match.join())
+        }
       }
     }
 
-    function renderText(node) {
-      const reg = /{{(.+?)}}/g
-      let match
-      while (match = reg.exec(node.nodeValue)) {
-        console.log(match)
-        let raw = match[0]
-        let key = match[1].trim()
-        node.nodeValue = node.nodeValue.replace(raw, data[key])
-      }
-    }
+    // function renderText(node) {
+    // const reg = /{{(.+?)}}/g
+    // let match
+    // while (match = reg.exec(node.nodeValue)) {
+    // console.log(match)
+    // let raw = match[0]
+    // let key = match[1].trim()
+    // node.nodeValue = node.nodeValue.replace(raw, data[key])
+    // }
+    // }
 
     function renderText(node, data) {
-      let reg = /{{(.+?)}}/g,
-        code = 'with(obj) {var r=[];\n',
-        cursor = 0,
-        match;
-      let add = function (line, js) {
-        js ? code += `r.push(${line});\n` :
-          code += `r.push("${line.replace(/"/g, '\\"')}");\n`
+      let _strNode = node.innerHTML
+      //拿到{{xxx}}里边的xxx
+      let re = /([^{{}}])+/g
+      //["{{name}}", "{{age}}", "{{hobby.play}}"]
+      for (let i = 0; i < _block.length; i++) {
+        let key = _block[i].match(re)[0]
+        let _result;
+        console.log(_block[i]);
+        console.log(key);
+        //根据with的特性，所以其{}里边出现的变量，千万不要与我们data旗下的属性名重名，所以我就起了个加下划线的名字！
+        with(data) {
+          _result = _strNode.replace(_block[i], eval(key))
+        }
+        _strNode = _result
       }
-      while (match = reg.exec(node.nodeValue)) {
-        add(node.nodeValue.slice(cursor, match.index));
-        add(match[1], true);
-        cursor = match.index + match[0].length;
-      }
-      add(node.nodeValue.substr(cursor, node.nodeValue.length - cursor));
-      code += 'return r.join("");}';
-      console.log(code)
-      node.nodeValue = Function('obj', code).apply(data, [data]);
-      return undefined
+      node.innerHTML = _strNode
     }
-    traverse(app)
+    traverse(app);
+    renderText(app, data)
   </script>
 </body>
 
