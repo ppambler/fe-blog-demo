@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Searching for strings</title>
+  <style>
+    .found {
+      background-color: #ff0;
+    }
+  </style>
+</head>
+
+<body>
+  <form id="textsearch" action="./xxx.html">
+    <textarea id="incoming" cols="150" rows="10">
+</textarea>
+    <p>
+      Search pattern: <input id="pattern" type="text" />
+    </p>
+    <button id="searchSubmit">Search for pattern</button>
+  </form>
+  <div id="searchResult"></div>
+  <script>
+    function findStr() {
+      console.log('xx')
+      // get pattern
+      var pattern = document.getElementById("pattern").value;
+      var re = new RegExp(pattern, "g");
+      // get string
+      var searchString = document.getElementById("incoming").value;
+      var matchArray;
+      var resultString = "<pre>";
+      var first = 0;
+      var last = 0;
+      // find each match
+      while ((matchArray = re.exec(searchString)) != null) {
+        last = matchArray.index;
+        // get all of string up to match, concatenate
+        resultString += searchString.substring(first, last);
+        // add matched, with class
+        resultString += "<span class='found'>" + matchArray[0] + "</span>";
+        first = re.lastIndex;
+      }
+      // finish off string
+      resultString += searchString.substring(first, searchString.length);
+      resultString += "</pre>";
+      // insert into page
+      document.getElementById("searchResult").innerHTML = resultString;
+    }
+    document.getElementById("textsearch").onsubmit = function (event) {
+      // 阻止表单提交
+      // event.preventDefault()
+      console.log('submit事件触发')
+      if(event && event.keyCode == 13) {
+        findStr()
+      }
+      // 返回false同样是阻止表单提交
+      return false
+    }
+    document.getElementById("searchSubmit").onclick = function (e) {
+      // 当你出发按钮的onclick事件时，同样会触发onsubmit事件！
+     findStr()
+    }
+  </script>
+</body>
+
+</html>
