@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Ctrl+F,实现浏览器类似的搜索姿势</title>
+  <style>
+    .searchStr {
+      display: none;
+    }
+    
+  </style>
 </head>
 <body>
   <p>需求：</p>
@@ -14,5 +20,34 @@
     <li>输入内容，实时高亮结果</li>
     <li>Shift+回车，向上搜索，直接回车向下搜索，还可以摁x，GG掉搜索框！</li>
   </ul>
+  <p>资料：</p>
+  <a href="https://i.congm.in/js-find/">利用原生JS实现类似浏览器查找高亮功能</a><br>
+  <a href="https://www.zhangxinxu.com/wordpress/2013/07/domtokenlist-html5-dom-classlist-%E7%B1%BB%E5%90%8D/">HTML5 DOM元素类名相关操作API classList简介</a><br>
+  <a href="https://www.cnblogs.com/xiaoheimiaoer/p/4716191.html">JS监听组合按键</a>
+  <div class="searchStr">
+    Search pattern：<input type="text" id="pattern">
+  </div>
+  <script>
+    const search = document.getElementsByClassName('searchStr')[0]
+    console.log(search)
+    let flag = 0;
+    document.onkeydown = function(e) {
+      console.log(e)
+        var keyCode = e.keyCode || e.which || e.charCode;
+        var ctrlKey = e.ctrlKey || e.metaKey;
+        if(ctrlKey && keyCode == 70) {
+            if(flag) {
+              flag = 0
+              search.style.display = 'none'
+            } else {
+              flag = 1
+              console.log(search.style)
+              search.style.display = 'block'
+            }
+        }
+        e.preventDefault();
+        return false;
+    }
+  </script>
 </body>
 </html>
